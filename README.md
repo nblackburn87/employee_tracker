@@ -8,7 +8,7 @@ Let users add and list projects, and assign projects to employees. For now, assu
 
 Now, the company has gotten more collaborative - multiple employees can work on the same project. For this many-to-many relationship, read the Rails guide on the has_and_belongs_to_many association. In their example, the code t.belongs_to :assembly is equivalent to t.column :assembly_id, :integer. To add a new project to what an employee is working on, run something like employee.projects << project1.To see what employees are working on a project, you'll run something like project.employees. Active Record will automatically work through the join table for you! (COMPLETE)
 
-The company wants to start tracking what each employee contributed to a project. Read the Rails guide on has_many :through and use it instead of has_and_belongs_to_many. Make sure that the company can provide a description of each employee's contribution to the project.
+The company wants to start tracking what each employee contributed to a project. Read the Rails guide on has_many :through and use it instead of has_and_belongs_to_many. Make sure that the company can provide a description of each employee's contribution to the project.(COMPLETE)
 
 Let the company choose a division and list out all of the projects its employees have worked on. Do this with a single line of Active Record methods.
 Now the company wants to run reports on which projects employees have worked on at various time. Let the company add start and end dates to projects, then choose an employee and a date range and see which projects they worked on during that time.

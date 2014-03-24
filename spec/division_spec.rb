@@ -8,6 +8,7 @@ describe Division do
   end
 
   it { should have_many :employees }
+  it { should have_many :projects }
 
   it 'should be able to destroy itself' do
     new_division = Division.create(:name => "Human Resources")

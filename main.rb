@@ -37,6 +37,7 @@ def create_menu
   puts "Press 'e' to add a new employee."
   puts "Press 'd' to add a new division."
   puts "Press 'p' to add a new project."
+  puts "Press 'a' to add a current employee to a division."
   puts "Press 'c' to add a contribution to a project."
   puts "Press 'u' to return to the previous menu."
 
@@ -46,6 +47,8 @@ def create_menu
     add_employee
   when 'd'
     add_division
+  when 'a'
+    add_employee_to_division
   when 'p'
     add_project
   when 'c'
@@ -61,20 +64,6 @@ def add_employee
   puts "What is the new employee's name?"
   user_input = gets.chomp
   new_employee = Employee.create({ :name => user_input })
-  puts "What division would you like to assign them to?"
-  user_input = gets.chomp
-  division = (Division.all.select { |division| division.name == user_input }).first
-  # if division == nil
-  #   puts "That division does not exist. Would you like to add it? y/n"
-  #   user_input = gets.chomp.downcase
-  #   if user_input == 'y'
-  #     add_division
-  #   else
-      # add_employee
-    # end
-  # end
-  division.employees << new_employee
-
   puts "Employee added.\n"
   main_menu
 end
@@ -87,14 +76,29 @@ def add_division
  main_menu
 end
 
+def add_employee_to_division
+  puts "What employee do you want to assign?"
+  Employee.all.each { |e| puts e.name }
+  input = gets.chomp
+  employee = Employee.find_by(:name => input)
+  puts "What division do you want to assign them to?"
+  Division.all.each { |d| puts d.name }
+  input = gets.chomp
+  division = Division.find_by(:name => input)
+  division.employees << employee
+  puts "#{employee.name} was assigned to #{division.name}."
+  gets.chomp
+  main_menu
+end
+
 def add_project
   puts "What is the name of the new Project?"
   user_input = gets.chomp
   new_project = Project.create({ :name => user_input})
-  # puts "What employee is working on this project?"
-  # user_input = gets.chomp
-  # employee = (Employee.all.select { |employee| employee.name == user_input }).first
-  # new_project.employees << employee
+  puts "What employee is working on this project?"
+  user_input = gets.chomp
+  employee = Employee.find_by(:name => user_input)
+  new_project.employees << employee
   main_menu
 end
 
@@ -106,7 +110,7 @@ def add_contribution
   puts "What employee made the contribution?"
   Employee.all.each { |e| puts e.name }
   input = gets.chomp
-  employee = Employee.find_by(:name => input)
+  employee = Employee.find_by(name: input)
   puts "What is the description of this contribution?"
   desc_input = gets.chomp
   Contribution.create(:project_id => project.id, :employee_id => employee.id, :description => desc_input)
@@ -121,6 +125,7 @@ def list_menu
   puts "Press 'd' to list divisions."
   puts "Press 'p' to list projects."
   puts "Press 'c' to list contributions."
+  puts "Press 'pd' to list projects by divisions."
   puts "Press 'u' to go return to the previous menu."
 
   user_input = gets.chomp.downcase
@@ -137,6 +142,8 @@ def list_menu
     list_menu
   when 'c'
     list_contributions
+  when 'pd'
+    list_projects_by_divisions
   when 'u'
     main_menu
   else
@@ -161,6 +168,15 @@ def list_employees
   main_menu
 end
 
+def list_projects_by_divisions
+  puts "What division's projects do you want to list?"
+  input = gets.chomp
+  Division.find_by(:name => input).employees.projects.each {|p| puts p}
+  "Enter any key to go back to main menu."
+  gets.chomp
+  main_menu
+end
+
 def list_divisions
   divisions = Division.all
   divisions.each_with_index { |division, index| puts "#{index +1}. #{division.name}" }
@@ -170,7 +186,7 @@ def list_divisions
     division = divisions[user_input - 1]
     division.employees.each { |employee| puts employee.name }
   else
-    puts "That is not a valid input!!!"
+    puts "That is not a valid input!"
     main_menu
   end
   main_menu
@@ -200,11 +216,11 @@ def delete_menu
   case user_input
   when 'e'
     Employee.all.each_with_index do |employee, index|
-      puts (index+1).to_s + ": " + employee.name
+      puts (index + 1).to_s + ": " + employee.name
     end
     puts "Which employee would you like to delete? Enter index number."
     user_input = gets.chomp.to_i
-    Employee.all[user_input-1].destroy
+    Employee.all[user_input - 1].destroy
     puts "Employee deleted. Enter anything to go back to main_menu."
     gets.chomp
     main_menu
@@ -214,7 +230,7 @@ def delete_menu
     end
     puts "Which division would you like to delete? Enter index number."
     user_input = gets.chomp.to_i
-    Division.all[user_input-1].destroy
+    Division.all[user_input - 1].destroy
     puts "Division deleted. Enter anything to go back to main_menu."
     gets.chomp
     main_menu
