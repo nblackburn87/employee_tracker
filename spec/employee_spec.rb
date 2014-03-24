@@ -8,4 +8,7 @@ describe Employee do
   end
 
   it { should belong_to :division }
+
+  it { should have_many :contributions }
+  it { should have_many :projects }
 end

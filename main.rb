@@ -2,36 +2,56 @@ require 'active_record'
 require './lib/employee'
 require './lib/division'
 require './lib/project'
+require './lib/contribution'
 
 database_configurations = YAML::load(File.open('./db/config.yml'))
 development_configuration = database_configurations['development']
 ActiveRecord::Base.establish_connection(development_configuration)
 
 def main_menu
-  puts "Press 'a' to add a new Employee."
-  puts "Press 'd' to create a new Division."
-  puts "Press 'p' to add a new project inside a Division."
-  puts "Press 'l' to list Employees"
-  puts "Press 'ld' for a list of existing Divisions"
-  puts "Press 'lp' to list all ongoing Projects."
+  puts "Press 'c' to create a new item."
+  puts "Press 'l' to see a list."
+  puts "Press 'd' to delete something."
+  puts "Press 'u' to update something."
   puts "Press 'x' to exit"
-  choice = gets.chomp.downcase
+  user_input = gets.chomp.downcase
 
-  case choice
-  when 'a'
+  case user_input
+  when 'c'
+    create_menu
+  when 'l'
+    list_menu
+  when 'd'
+    delete_menu
+  when 'u'
+    edit_menu
+  when 'x'
+    puts "Thank you!"
+    exit
+  else
+    puts "Not a valid input."
+  end
+end
+
+def create_menu
+  puts "Press 'e' to add a new employee."
+  puts "Press 'd' to add a new division."
+  puts "Press 'p' to add a new project."
+  puts "Press 'c' to add a contribution to a project."
+  puts "Press 'u' to return to the previous menu."
+
+  user_input = gets.chomp.downcase
+  case user_input
+  when 'e'
     add_employee
   when 'd'
     add_division
   when 'p'
     add_project
-  when 'l'
-    list_employees
-  when 'ld'
-    list_divisions
-  when 'lp'
-    list_projects
-  when 'x'
-    puts "Thank you!"
+  when 'c'
+    add_contribution
+  when 'u'
+    main_menu
   else
     puts "Not a valid input."
   end
@@ -44,26 +64,18 @@ def add_employee
   puts "What division would you like to assign them to?"
   user_input = gets.chomp
   division = (Division.all.select { |division| division.name == user_input }).first
+  # if division == nil
+  #   puts "That division does not exist. Would you like to add it? y/n"
+  #   user_input = gets.chomp.downcase
+  #   if user_input == 'y'
+  #     add_division
+  #   else
+      # add_employee
+    # end
+  # end
   division.employees << new_employee
 
   puts "Employee added.\n"
-  main_menu
-end
-
-def list_employees
-  puts "Here are all your employees:"
-  employees = Employee.all
-  employees.each { |employee| puts employee.name }
-  puts "Would you like to see an employee's project history? (y/n)"
-  user_input = gets.chomp.downcase
-  if user_input = "y"
-    puts "Please input the employee whose history you'd like to see."
-    user_input = gets.chomp
-    employee = (Employee.all.select { |e| e.name == user_input}).first
-    employee.projects.each { |project| puts project.name }
-    puts "Enter anything to go back to main menu."
-    gets.chomp
-  end
   main_menu
 end
 
@@ -79,15 +91,74 @@ def add_project
   puts "What is the name of the new Project?"
   user_input = gets.chomp
   new_project = Project.create({ :name => user_input})
-  puts "What employee is working on this project?"
-  user_input = gets.chomp
-  employee = (Employee.all.select { |employee| employee.name == user_input }).first
-  new_project.employees << employee
+  # puts "What employee is working on this project?"
+  # user_input = gets.chomp
+  # employee = (Employee.all.select { |employee| employee.name == user_input }).first
+  # new_project.employees << employee
   main_menu
 end
 
-def list_projects
-  Project.all.each { |project| puts project.name}
+def add_contribution
+  puts "What project would you like to add a contribution to?"
+  list_projects
+  input = gets.chomp
+  project = Project.find_by(:name => input)
+  puts "What employee made the contribution?"
+  Employee.all.each { |e| puts e.name }
+  input = gets.chomp
+  employee = Employee.find_by(:name => input)
+  puts "What is the description of this contribution?"
+  desc_input = gets.chomp
+  Contribution.create(:project_id => project.id, :employee_id => employee.id, :description => desc_input)
+  puts "Contribution added.  Press any key to go back to main menu."
+  gets.chomp
+  main_menu
+end
+#**********************************************
+
+def list_menu
+  puts "Press 'e' to list employees."
+  puts "Press 'd' to list divisions."
+  puts "Press 'p' to list projects."
+  puts "Press 'c' to list contributions."
+  puts "Press 'u' to go return to the previous menu."
+
+  user_input = gets.chomp.downcase
+
+  case user_input
+  when 'e'
+    list_employees
+  when 'd'
+    list_divisions
+  when 'p'
+    list_projects
+    puts "Enter any key to continue."
+    gets.chomp
+    list_menu
+  when 'c'
+    list_contributions
+  when 'u'
+    main_menu
+  else
+    puts "Not a valid input."
+  end
+end
+
+def list_employees
+  puts "Here are all your employees:"
+  employees = Employee.all
+  employees.each { |employee| puts employee.name }
+  puts "Would you like to see an employee's project history? (y/n)"
+  user_input = gets.chomp.downcase
+  if user_input == "y"
+    puts "Please input the employee whose history you'd like to see."
+    user_input = gets.chomp
+    employee = (Employee.all.select { |e| e.name == user_input}).first
+    employee.projects.each { |project| puts project.name }
+    puts "Enter anything to go back to main menu."
+    gets.chomp
+  end
+  main_menu
 end
 
 def list_divisions
@@ -95,10 +166,110 @@ def list_divisions
   divisions.each_with_index { |division, index| puts "#{index +1}. #{division.name}" }
   puts "Please select a division number."
   user_input = gets.chomp.to_i
-  division = divisions[user_input - 1]
-  division.employees.each { |employee| puts employee.name }
+  if user_input.is_a? Integer
+    division = divisions[user_input - 1]
+    division.employees.each { |employee| puts employee.name }
+  else
+    puts "That is not a valid input!!!"
+    main_menu
+  end
   main_menu
 end
 
+def list_projects
+  Project.all.each { |project| puts project.name}
+end
+
+def list_contributions
+  puts "What project do you want to see contributions for?"
+  list_projects
+  input = gets.chomp
+  project = Project.find_by(:name => input)
+  project.contributions.each { |c| puts c.description }
+  puts "Enter any key to go back to main menu."
+  gets.chomp
+  main_menu
+end
+
+#******************************************
+
+def delete_menu
+  puts "Press 'e' to delete an employee, 'd' to delete a division, 'p' to delete a project."
+  user_input = gets.chomp.downcase
+
+  case user_input
+  when 'e'
+    Employee.all.each_with_index do |employee, index|
+      puts (index+1).to_s + ": " + employee.name
+    end
+    puts "Which employee would you like to delete? Enter index number."
+    user_input = gets.chomp.to_i
+    Employee.all[user_input-1].destroy
+    puts "Employee deleted. Enter anything to go back to main_menu."
+    gets.chomp
+    main_menu
+  when 'd'
+    Division.all.each_with_index do |division, index|
+      puts (index+1).to_s + ": " + division.name
+    end
+    puts "Which division would you like to delete? Enter index number."
+    user_input = gets.chomp.to_i
+    Division.all[user_input-1].destroy
+    puts "Division deleted. Enter anything to go back to main_menu."
+    gets.chomp
+    main_menu
+  when 'p'
+    Project.all.each_with_index do |project, index|
+      puts (index+1).to_s + ": " + project.name
+    end
+    puts "Which project would you like to delete? Enter index number."
+    user_input = gets.chomp.to_i
+    Project.all[user_input-1].destroy
+    puts "Project deleted. Enter anything to go back to main_menu."
+    gets.chomp
+    main_menu
+  end
+end
+
+def edit_menu
+  puts "Press 'e' to edit an employee name."
+  puts "Press 'd' to edit a division title."
+  puts "Press 'p' to edit something about a project."
+
+  user_input = gets.chomp.downcase
+
+  case user_input
+  when 'e'
+    thing
+  when 'd'
+    other thing
+  when 'p'
+    edit_project
+  when 'u'
+    main_menu
+  else
+    puts "Not a valid input."
+  end
+end
+
+def edit_project
+  puts "These projects are currently underway:"
+  list_projects
+  puts "\n"
+  puts "Which project would you like to view?"
+  user_input = gets.chomp.downcase
+  project = (Projects.all.select { |project| project.name == user_input }).first
+  project.employees.each { |employee| puts employee.name }
+  puts "What employee's contribution would you like to edit?"
+  user_input = gets.chomp
+  employee = project.employees.select { |e| e.name == user_input }
+  puts "What is the new description of the contribution?"
+  user_input = gets.chomp
+  cont = Contribution.find_by(:project_id => project.id, :employee_id => employee.id)
+  cont.update(:description => user_input)
+  puts "Enter any key to go back to main menu."
+  gets.chomp
+  main_menu
+end
 
 main_menu

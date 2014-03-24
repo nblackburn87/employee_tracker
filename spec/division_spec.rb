@@ -8,4 +8,11 @@ describe Division do
   end
 
   it { should have_many :employees }
+
+  it 'should be able to destroy itself' do
+    new_division = Division.create(:name => "Human Resources")
+    new_division.destroy
+    new_division2 = Division.create(:name => "Billing")
+    Division.all.should eq [new_division2]
+  end
 end
